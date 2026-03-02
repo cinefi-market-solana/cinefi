@@ -18,5 +18,9 @@ export const adminCreateMarketBodySchema = z.object({
   movieId: z.string().min(1),
   programAddress: z.string().min(1),
   switchboardFeedPubkey: z.string().min(1),
+  winRadius: z.number().int().min(0).default(5),
+  baseMintBet: z.number().int().min(0).default(1_000_000_000),
+  marketOpenDate: z.coerce.date().optional(),
+  bettingClosesAt: z.coerce.date().optional(),
 });
 

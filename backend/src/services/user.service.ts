@@ -26,7 +26,7 @@ export async function getUserProfile(walletAddress: string) {
       : 0;
 
   return {
-    walletAddress: user.walletAddress,
+    email: user.email,
     betCount: stats.betCount,
     avgAccuracy,
     totalStaked: Number(stats.totalStaked),

@@ -131,14 +131,19 @@ export async function createBetForMarket(params: {
         userId: user.id,
         marketId: market.id,
         transactionSignature,
+        signingWallet: walletAddress,
         predictedScore,
-        stakeAmount,
+        stakeAmount: BigInt(stakeAmount),
+        dayOfPrediction: 0,
+        timeMultiplier: 1,
       },
     });
 
     const newBetCount = market.betCount + 1;
     const newTotalPool = Number(market.totalPool) + stakeAmount;
-    const currentAgg = Number(market.predictedScoreAgg);
+    const currentAgg = market.averageCrowdPrediction
+      ? Number(market.averageCrowdPrediction)
+      : 0;
     const newPredictedAgg =
       (currentAgg * market.betCount + predictedScore) / newBetCount;
 
@@ -147,7 +152,7 @@ export async function createBetForMarket(params: {
       data: {
         betCount: newBetCount,
         totalPool: newTotalPool,
-        predictedScoreAgg: newPredictedAgg,
+        averageCrowdPrediction: newPredictedAgg,
       },
     });
 
@@ -161,9 +166,12 @@ export async function adminCreateMarket(params: {
   movieId: string;
   programAddress: string;
   switchboardFeedPubkey: string;
+  winRadius?: number;
+  baseMintBet?: number;
+  marketOpenDate?: Date;
+  bettingClosesAt?: Date;
 }) {
-  const { movieId, programAddress, switchboardFeedPubkey } = params;
-  const existingMarket = await marketRepo.getMarketByMovieId(movieId);
+  const existingMarket = await marketRepo.getMarketByMovieId(params.movieId);
 
   if (existingMarket) {
     throw new AppError(
@@ -174,9 +182,13 @@ export async function adminCreateMarket(params: {
   }
 
   const market = await marketRepo.createMarket({
-    movieId,
-    programAddress,
-    switchboardFeedPubkey,
+    movieId: params.movieId,
+    programAddress: params.programAddress,
+    switchboardFeedPubkey: params.switchboardFeedPubkey,
+    winRadius: params.winRadius,
+    baseMintBet: params.baseMintBet,
+    marketOpenDate: params.marketOpenDate,
+    bettingClosesAt: params.bettingClosesAt,
   });
 
   return market;
@@ -236,7 +248,6 @@ export async function adminResolveMarket(params: {
       await txClient.bet.update({
         where: { id: score.betId },
         data: {
-          accuracyScore: score.accuracy,
           payoutAmount: payout,
         },
       });

@@ -37,9 +37,23 @@ export async function createMarket(data: {
   movieId: string;
   programAddress: string;
   switchboardFeedPubkey: string;
+  winRadius?: number;
+  baseMintBet?: number | bigint;
+  marketOpenDate?: Date;
+  bettingClosesAt?: Date;
 }) {
+  const now = new Date();
+  const weekFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
   return prisma.market.create({
-    data,
+    data: {
+      movieId: data.movieId,
+      programAddress: data.programAddress,
+      switchboardFeedPubkey: data.switchboardFeedPubkey,
+      winRadius: data.winRadius ?? 5,
+      baseMintBet: BigInt(data.baseMintBet ?? 1_000_000_000),
+      marketOpenDate: data.marketOpenDate ?? now,
+      bettingClosesAt: data.bettingClosesAt ?? weekFromNow,
+    },
   });
 }
 
@@ -84,16 +98,16 @@ export async function updateMarketAggregates(params: {
   marketId: string;
   totalPool: number;
   betCount: number;
-  predictedScoreAgg: number;
+  averageCrowdPrediction: number;
 }) {
-  const { marketId, totalPool, betCount, predictedScoreAgg } = params;
+  const { marketId, totalPool, betCount, averageCrowdPrediction } = params;
 
   return prisma.market.update({
     where: { id: marketId },
     data: {
       totalPool,
       betCount,
-      predictedScoreAgg,
+      averageCrowdPrediction,
     },
   });
 }

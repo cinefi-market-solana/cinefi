@@ -5,11 +5,23 @@ export async function createBet(data: {
   userId: string;
   marketId: string;
   transactionSignature: string;
+  signingWallet: string;
   predictedScore: number;
   stakeAmount: number;
+  dayOfPrediction: number;
+  timeMultiplier: number;
 }) {
   return prisma.bet.create({
-    data,
+    data: {
+      userId: data.userId,
+      marketId: data.marketId,
+      transactionSignature: data.transactionSignature,
+      signingWallet: data.signingWallet,
+      predictedScore: data.predictedScore,
+      stakeAmount: BigInt(data.stakeAmount),
+      dayOfPrediction: data.dayOfPrediction,
+      timeMultiplier: data.timeMultiplier,
+    },
   });
 }
 
@@ -69,25 +81,22 @@ export async function getUserStats(userId: string) {
       _sum: {
         stakeAmount: true,
         payoutAmount: true,
-        accuracyScore: true,
       },
-      _count: {
-        _all: true,
-      },
+      _count: { id: true },
     }),
     prisma.bet.count({
       where: {
         userId,
-        accuracyScore: { not: null },
+        payoutAmount: { not: null },
       },
     }),
   ]);
 
   return {
-    betCount: aggregates._count._all,
-    totalStaked: aggregates._sum.stakeAmount ?? 0,
+    betCount: aggregates._count.id,
+    totalStaked: aggregates._sum.stakeAmount ?? 0n,
     totalPayout: aggregates._sum.payoutAmount ?? 0,
-    totalAccuracy: aggregates._sum.accuracyScore ?? 0,
+    totalAccuracy: 0,
     resolvedBetCount: resolvedCount,
   };
 }

@@ -4,6 +4,7 @@ import { paginationQuerySchema } from "../validators/common";
 import { upsertUserBodySchema } from "../validators/user.validator";
 import * as userService from "../services/user.service";
 import type { PaginatedResponse, SuccessResponse } from "../types/api";
+import { getParam } from "../utils/params";
 
 /** Get current user profile (from JWT). */
 export async function getMe(
@@ -68,7 +69,7 @@ export async function getUserProfile(
   req: Request,
   res: Response<SuccessResponse<unknown>>,
 ): Promise<void> {
-  const { walletAddress } = req.params;
+  const walletAddress = getParam(req, "walletAddress");
   const profile = await userService.getUserProfile(walletAddress);
   res.status(StatusCodes.OK).json({
     success: true,
@@ -81,7 +82,7 @@ export async function getUserBets(
   res: Response<PaginatedResponse<unknown>>,
 ): Promise<void> {
   const parsed = paginationQuerySchema.parse(req.query);
-  const { walletAddress } = req.params;
+  const walletAddress = getParam(req, "walletAddress");
 
   const result = await userService.getUserBets({
     walletAddress,

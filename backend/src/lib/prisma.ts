@@ -1,10 +1,7 @@
 import { PrismaClient } from "@prisma/client";
 
 const prismaClientSingleton = () => {
-    console.log("DATABASE_URL:", process.env.DATABASE_URL);
-    return new PrismaClient({
-
-    });
+    return new PrismaClient({});
 };
 
 type PrismaClientSingleton = ReturnType<typeof prismaClientSingleton>;

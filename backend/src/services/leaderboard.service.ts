@@ -2,36 +2,31 @@ import type { Prisma } from "@prisma/client";
 import prisma from "../lib/prisma";
 
 type LeaderboardEntry = {
-  walletAddress: string;
-  avgAccuracy: number;
+  email: string;
+  totalPayout: number;
   betCount: number;
 };
 
 export async function getLeaderboard(
   limit = 50,
 ): Promise<LeaderboardEntry[]> {
-  // TODO: Add caching (e.g. Redis) for leaderboard once caching is implemented.
   const rows = await prisma.bet.groupBy({
     by: ["userId"],
     where: {
-      accuracyScore: { not: null },
+      payoutAmount: { not: null },
     },
-    _avg: {
-      accuracyScore: true,
+    _sum: {
+      payoutAmount: true,
     },
-    _count: {
-      _all: true,
-    },
+    _count: { id: true },
     having: {
       _count: {
-        _all: {
-          gte: 3,
-        },
+        id: { gte: 3 },
       },
     } as Prisma.BetGroupByArgs["having"],
     orderBy: {
-      _avg: {
-        accuracyScore: "desc",
+      _sum: {
+        payoutAmount: "desc",
       },
     },
     take: limit,
@@ -45,12 +40,12 @@ export async function getLeaderboard(
     where: { id: { in: rows.map((r) => r.userId) } },
   });
 
-  const userMap = new Map(users.map((u) => [u.id, u.walletAddress]));
+  const userMap = new Map(users.map((u) => [u.id, u.email]));
 
   const leaderboard: LeaderboardEntry[] = rows.map((row) => ({
-    walletAddress: userMap.get(row.userId) ?? "unknown",
-    avgAccuracy: Number(row._avg.accuracyScore ?? 0),
-    betCount: row._count._all,
+    email: userMap.get(row.userId) ?? "unknown",
+    totalPayout: Number(row._sum.payoutAmount ?? 0),
+    betCount: row._count.id,
   }));
 
   return leaderboard;

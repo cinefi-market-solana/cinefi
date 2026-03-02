@@ -7,6 +7,7 @@ import {
 import * as marketService from "../services/market.service";
 import * as adminController from "./admin.controller";
 import type { PaginatedResponse, SuccessResponse } from "../types/api";
+import { getParam } from "../utils/params";
 
 export async function getMarkets(
   req: Request,
@@ -33,7 +34,7 @@ export async function getMarketById(
   req: Request,
   res: Response<SuccessResponse<unknown>>,
 ): Promise<void> {
-  const market = await marketService.getMarketById(req.params.id);
+  const market = await marketService.getMarketById(getParam(req, "id"));
   res.status(StatusCodes.OK).json({
     success: true,
     data: market,
@@ -44,7 +45,7 @@ export async function getMarketDistribution(
   req: Request,
   res: Response<SuccessResponse<Array<{ bucket: number; count: number }>>>,
 ): Promise<void> {
-  const distribution = await marketService.getMarketDistribution(req.params.id);
+  const distribution = await marketService.getMarketDistribution(getParam(req, "id"));
   res.status(StatusCodes.OK).json({
     success: true,
     data: distribution,
@@ -57,7 +58,7 @@ export async function createBet(
 ): Promise<void> {
   const body = createBetBodySchema.parse(req.body);
   const bet = await marketService.createBetForMarket({
-    marketId: req.params.id,
+    marketId: getParam(req, "id"),
     walletAddress: body.walletAddress,
     transactionSignature: body.transactionSignature,
     predictedScore: body.predictedScore,
@@ -76,7 +77,7 @@ export async function getMarketBets(
 ): Promise<void> {
   const parsed = marketListQuerySchema.parse(req.query);
   const result = await marketService.listBetsForMarket({
-    marketId: req.params.id,
+    marketId: getParam(req, "id"),
     pagination: {
       page: parsed.page,
       limit: parsed.limit,
@@ -115,7 +116,7 @@ export async function closeMarket(
   req: Request,
   res: Response<SuccessResponse<unknown>>,
 ): Promise<void> {
-  const result = await marketService.adminCloseMarket(req.params.id);
+  const result = await marketService.adminCloseMarket(getParam(req, "id"));
   res.status(StatusCodes.OK).json({
     success: true,
     data: result,
@@ -127,7 +128,7 @@ export async function deleteMarket(
   req: Request,
   res: Response<SuccessResponse<unknown>>,
 ): Promise<void> {
-  const result = await marketService.adminDeleteMarket(req.params.id);
+  const result = await marketService.adminDeleteMarket(getParam(req, "id"));
   res.status(StatusCodes.OK).json({
     success: true,
     data: result,

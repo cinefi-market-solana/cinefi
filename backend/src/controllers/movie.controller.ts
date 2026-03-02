@@ -5,6 +5,7 @@ import * as movieService from "../services/movie.service";
 import * as adminController from "./admin.controller";
 import type { PaginatedResponse, SuccessResponse } from "../types/api";
 import type { Movie } from "@prisma/client";
+import { getParam } from "../utils/params";
 
 export async function getMovies(req: Request, res: Response<PaginatedResponse<Movie>>): Promise<void> {
   const parsedQuery = movieListQuerySchema.parse(req.query);
@@ -33,7 +34,7 @@ export async function getMovieById(
   req: Request,
   res: Response<SuccessResponse<unknown>>,
 ): Promise<void> {
-  const movie = await movieService.getMovieById(req.params.id);
+  const movie = await movieService.getMovieById(getParam(req, "id"));
   res.status(StatusCodes.OK).json({
     success: true,
     data: movie,
