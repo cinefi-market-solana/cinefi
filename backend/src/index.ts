@@ -18,16 +18,16 @@ app.disable("x-powered-by");
 app.use(helmet());
 
 app.use(
-  cors({
-    origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, origin ?? true);
-      } else {
-        callback(new Error("Not allowed by CORS"));
-      }
-    },
-    credentials: true,
-  }),
+    cors({
+        origin: (origin, callback) => {
+            if (!origin || allowedOrigins.includes(origin)) {
+                callback(null, origin ?? true);
+            } else {
+                callback(new Error("Not allowed by CORS"));
+            }
+        },
+        credentials: true,
+    }),
 );
 
 app.use(compression());
@@ -39,13 +39,13 @@ app.use(express.urlencoded({ extended: true }));
 app.use("/api", apiRouter);
 
 app.get("/health", (_req, res) => {
-  res
-    .status(StatusCodes.OK)
-    .json({ success: true, data: { status: "ok" } });
+    res
+        .status(StatusCodes.OK)
+        .json({ success: true, data: { status: "ok" } });
 });
 
 app.use(errorHandler);
 
 app.listen(port, () => {
-  logger.info({ port }, "Express app listening");
+    logger.info({ port }, "Express app listening");
 });
