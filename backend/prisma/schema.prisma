@@ -1,0 +1,169 @@
+generator client {
+  provider   = "prisma-client-js"
+  engineType = "binary"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum MovieStatus {
+  UPCOMING
+  BETTING_OPEN
+  RESOLVED
+}
+
+enum MarketStatus {
+  OPEN
+  CLOSED
+  RESOLVED
+}
+
+enum NotificationType {
+  TRAILER_DROP
+  BETTING_OPEN
+  MARKET_RESOLVED
+}
+
+enum HypeLevel {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum AuthType {
+  EMAIL
+  GOOGLE
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+model User {
+  id String @id @default(cuid())
+
+  name            String?
+  email           String    @unique
+  password        String?
+  authType        AuthType?
+  oauthProviderId String?
+  profileUrl      String?
+  role            Role      @default(USER)
+
+  fcmToken          String?
+  fcmTokenUpdatedAt DateTime?
+  genrePreferences  String[]
+  totalBets         Int       @default(0)
+  totalWinnings     Decimal   @default(0) @db.Decimal(30, 10)
+  averageAccuracy   Decimal?  @db.Decimal(5, 4)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  bets             Bet[]
+  notificationLogs NotificationLog[]
+
+  @@index([totalWinnings])
+  @@index([email])
+}
+
+model Movie {
+  id          String      @id @default(cuid())
+  tmdbId      Int         @unique
+  title       String
+  slug        String      @unique
+  posterUrl   String?
+  trailerUrl  String?
+  releaseDate DateTime?
+  genres      String[]
+  status      MovieStatus @default(UPCOMING)
+  hypeLevel   HypeLevel   @default(LOW)
+
+  market        Market?
+  notifications NotificationLog[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@index([releaseDate])
+}
+
+model Market {
+  id      String @id @default(cuid())
+  movieId String @unique
+  movie   Movie  @relation(fields: [movieId], references: [id])
+
+  programAddress        String @unique
+  switchboardFeedPubkey String
+
+  winRadius   Int
+  baseMintBet BigInt
+
+  marketOpenDate      DateTime
+  bettingClosesAt     DateTime
+  resolutionTimestamp DateTime?
+
+  totalPool     BigInt @default(0)
+  totalStakeSum BigInt @default(0)
+
+  betCount               Int      @default(0)
+  averageCrowdPrediction Decimal? @db.Decimal(5, 2)
+
+  resolvedAt DateTime?
+  finalScore Decimal?     @db.Decimal(5, 2)
+  status     MarketStatus @default(OPEN)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  bets Bet[]
+
+  @@index([status])
+  @@index([bettingClosesAt])
+}
+
+model Bet {
+  id       String @id @default(cuid())
+  userId   String
+  marketId String
+
+  user   User   @relation(fields: [userId], references: [id])
+  market Market @relation(fields: [marketId], references: [id])
+
+  transactionSignature String @unique
+  signingWallet        String
+
+  predictedScore  Decimal  @db.Decimal(5, 2)
+  stakeAmount     BigInt
+  dayOfPrediction Int
+  timeMultiplier  Decimal  @db.Decimal(4, 3)
+  payoutAmount    Decimal? @db.Decimal(30, 10)
+
+  claimed   Boolean   @default(false)
+  claimedAt DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@index([userId, marketId])
+  @@index([marketId])
+  @@index([userId])
+  @@index([marketId, claimed])
+}
+
+model NotificationLog {
+  id      String           @id @default(cuid())
+  userId  String
+  movieId String
+  type    NotificationType
+  sentAt  DateTime         @default(now())
+
+  user  User  @relation(fields: [userId], references: [id])
+  movie Movie @relation(fields: [movieId], references: [id])
+
+  @@unique([userId, movieId, type])
+  @@index([movieId, type])
+}
