@@ -2,9 +2,10 @@
   "name": "backend",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "dist/index.js",
   "scripts": {
-    "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
+    "dev": "ts-node-dev --respawn --transpile-only --ignore-watch node_modules src/index.ts",
+    "dev:debug": "ts-node-dev --respawn --inspect --transpile-only --ignore-watch node_modules src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js"
   },
@@ -18,6 +19,7 @@
     "bcrypt": "^6.0.0",
     "compression": "^1.8.1",
     "cors": "^2.8.6",
+    "dotenv": "^17.3.1",
     "express": "^5.2.1",
     "express-rate-limit": "^8.2.1",
     "helmet": "^8.1.0",
@@ -25,6 +27,7 @@
     "jsonwebtoken": "^9.0.3",
     "pino": "^10.3.1",
     "pino-pretty": "^13.1.3",
+    "resend": "^6.9.3",
     "zod": "^4.3.6"
   },
   "devDependencies": {
@@ -34,7 +37,7 @@
     "@types/express": "^5.0.6",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^25.3.3",
-    "dotenv": "^17.3.1",
+    "cross-env": "^7.0.3",
     "prisma": "^6.19.2",
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.9.3"

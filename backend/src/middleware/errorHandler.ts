@@ -1,5 +1,6 @@
 import type { NextFunction, Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
+import { ZodError } from "zod";
 import { AppError } from "../utils/appError";
 import { logger } from "../lib/logger";
 import type { ErrorResponse } from "../types/api";
@@ -18,6 +19,24 @@ export function errorHandler(
       error: {
         code: err.code,
         message: err.message,
+      },
+    });
+    return;
+  }
+
+  if (err instanceof ZodError) {
+    logger.error({ err }, "Zod validation error");
+
+    const message =
+      env.NODE_ENV === "production"
+        ? "Invalid request data"
+        : JSON.stringify(err.issues);
+
+    res.status(StatusCodes.BAD_REQUEST).json({
+      success: false,
+      error: {
+        code: "VALIDATION_ERROR",
+        message,
       },
     });
     return;

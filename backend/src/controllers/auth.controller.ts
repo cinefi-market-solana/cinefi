@@ -4,6 +4,9 @@ import {
     registerBodySchema,
     loginBodySchema,
     refreshBodySchema,
+    verifyOtpBodySchema,
+    forgotPasswordBodySchema,
+    resetPasswordBodySchema,
 } from "../validators/auth.validator";
 import * as authService from "../services/auth.services";
 import type { SuccessResponse } from "../types/api";
@@ -16,7 +19,7 @@ export async function register(
     await authService.register(body);
     res.status(StatusCodes.CREATED).json({
         success: true,
-        data: { message: "Registration successful" },
+        data: { message: "Registration successful. Please check your email for the verification code." },
     });
 }
 
@@ -58,3 +61,50 @@ export async function refresh(
         },
     });
 }
+
+export async function verifyUser(
+    req: Request,
+    res: Response<
+        SuccessResponse<{
+            user: authService.SessionUser;
+            accessToken: string;
+            refreshToken: string;
+        }>
+    >,
+): Promise<void> {
+    const body = verifyOtpBodySchema.parse(req.body);
+    const result = await authService.verifyEmailOtp(body);
+    res.status(StatusCodes.OK).json({
+        success: true,
+        data: {
+            user: result.user,
+            accessToken: result.accessToken,
+            refreshToken: result.refreshToken,
+        },
+    });
+}
+
+export async function forgotPassword(
+    req: Request,
+    res: Response<SuccessResponse<{ message: string }>>,
+): Promise<void> {
+    const body = forgotPasswordBodySchema.parse(req.body);
+    await authService.requestPasswordReset(body);
+    res.status(StatusCodes.OK).json({
+        success: true,
+        data: { message: "OTP sent to email" },
+    });
+}
+
+export async function resetPassword(
+    req: Request,
+    res: Response<SuccessResponse<{ message: string }>>,
+): Promise<void> {
+    const body = resetPasswordBodySchema.parse(req.body);
+    await authService.resetPassword(body);
+    res.status(StatusCodes.OK).json({
+        success: true,
+        data: { message: "Password reset successfully" },
+    });
+}
+

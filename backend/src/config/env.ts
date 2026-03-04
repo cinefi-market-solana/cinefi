@@ -6,7 +6,7 @@ const envSchema = z.object({
   ADMIN_SECRET: z.string().min(1, "ADMIN_SECRET is required"),
   JWT_SECRET: z.string().min(1, "JWT_SECRET is required"),
   REFRESH_TOKEN_SECRET: z.string().min(1, "REFRESH_TOKEN_SECRET is required"),
-  NODE_ENV: z.enum(["development", "production"]),
+  NODE_ENV: z.enum(["development", "test", "production"]),
   PORT: z
     .string()
     .regex(/^\d+$/, "PORT must be a number")
@@ -18,6 +18,8 @@ const envSchema = z.object({
     .string()
     .optional()
     .transform((val) => val === "true"),
+  RESEND_API_KEY: z.string().min(1, "RESEND_API_KEY is required"),
+  RESEND_FROM_EMAIL: z.string().min(1, "RESEND_FROM_EMAIL is required"),
 });
 
 const rawEnv = {
@@ -30,6 +32,8 @@ const rawEnv = {
   PORT: process.env.PORT ?? "3000",
   LOG_LEVEL: process.env.LOG_LEVEL ?? "info",
   LOG_PRETTY: process.env.LOG_PRETTY,
+  RESEND_API_KEY: process.env.RESEND_API_KEY,
+  RESEND_FROM_EMAIL: process.env.RESEND_FROM_EMAIL,
 };
 
 const parsed = envSchema.safeParse(rawEnv);
