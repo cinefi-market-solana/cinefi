@@ -32,5 +32,10 @@ export async function verifyOtp(
         },
         orderBy: { createdAt: "desc" },
     });
+
+    if (record) {
+        await prisma.emailOtp.delete({ where: { id: record.id } });
+    }
+
     return !!record;
 }
