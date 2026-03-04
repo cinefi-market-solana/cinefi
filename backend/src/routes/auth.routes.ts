@@ -10,13 +10,7 @@ router.post("/login", asyncHandler(authController.login));
 router.post("/refresh", asyncHandler(authController.refresh));
 
 router.post("/verify", asyncHandler(authController.verifyUser));
-router.post(
-  "/forgot-password", authenticate,
-  asyncHandler(authController.forgotPassword),
-);
-router.post(
-  "/reset-password", authenticate,
-  asyncHandler(authController.resetPassword),
-);
+router.post("/forgot-password", asyncHandler(authController.forgotPassword));
+router.post("/reset-password", asyncHandler(authController.resetPassword));
 
 export default router;
