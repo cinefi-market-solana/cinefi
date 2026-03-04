@@ -108,10 +108,10 @@ model Market {
   movieId String @unique
   movie   Movie  @relation(fields: [movieId], references: [id])
 
+  onChainId             String @unique
   programAddress        String @unique
   switchboardFeedPubkey String
 
-  winRadius   Int
   baseMintBet BigInt
 
   marketOpenDate      DateTime
