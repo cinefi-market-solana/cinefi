@@ -43,6 +43,18 @@ export async function register(input: RegisterInput): Promise<void> {
         password: passwordHash,
     });
 
+export async function register(input: RegisterInput): Promise<void> {
+    const normalizedEmail = input.email.trim().toLowerCase();
+    const existing = await userRepo.getUserByEmail(normalizedEmail);
+
+    if (existing && existing.isVerified) {
+        throw new AppError(
+            StatusCodes.CONFLICT,
+            "Email already registered",
+            "EMAIL_ALREADY_EXISTS",
+        );
+    }
+
     const recentOtps = await otpRepo.countRecentOtps(normalizedEmail);
     if (recentOtps >= 5) {
         throw new AppError(
@@ -52,10 +64,18 @@ export async function register(input: RegisterInput): Promise<void> {
         );
     }
 
+    const passwordHash = await bcrypt.hash(input.password, SALT_ROUNDS);
+    await userRepo.createOrUpdateUser({
+        email: normalizedEmail,
+        name: input.name ?? null,
+        password: passwordHash,
+    });
+
     const otp = generateOtp();
     const otpHash = hashOtp(otp);
     await otpRepo.createOtp(normalizedEmail, otpHash);
     await sendEmail(normalizedEmail, otp);
+}
 }
 
 export async function login(input: LoginInput): Promise<{
