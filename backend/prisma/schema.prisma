@@ -45,13 +45,15 @@ enum Role {
 model User {
   id String @id @default(cuid())
 
-  name            String?
-  email           String    @unique
-  password        String?
+  name       String?
+  email      String  @unique
+  password   String?
+  profileUrl String?
+  role       Role    @default(USER)
+
+  isVerified      Boolean   @default(false)
   authType        AuthType?
   oauthProviderId String?
-  profileUrl      String?
-  role            Role      @default(USER)
 
   fcmToken          String?
   fcmTokenUpdatedAt DateTime?
@@ -68,6 +70,15 @@ model User {
 
   @@index([totalWinnings])
   @@index([email])
+}
+
+model EmailOtp {
+  id        String   @id @default(cuid())
+  email     String
+  otpHash   String
+  createdAt DateTime @default(now())
+
+  @@index([email, createdAt])
 }
 
 model Movie {

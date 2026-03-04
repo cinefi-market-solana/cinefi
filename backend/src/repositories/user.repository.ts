@@ -13,7 +13,7 @@ export async function getUserById(id: string) {
     });
 }
 
-export async function createUser(params: {
+export async function createOrUpdateUser(params: {
     email: string;
     name?: string | null;
     password: string;
@@ -21,9 +21,17 @@ export async function createUser(params: {
     authType?: AuthType;
 }) {
     const { email, name, password, role = Role.USER, authType = AuthType.EMAIL } = params;
-    return prisma.user.create({
-        data: {
+    return prisma.user.upsert({
+        where: { email },
+        create: {
             email,
+            name: name ?? null,
+            password,
+            role,
+            authType,
+            genrePreferences: [],
+        },
+        update: {
             name: name ?? null,
             password,
             role,
@@ -37,6 +45,13 @@ export async function updateUserPassword(userId: string, passwordHash: string) {
     return prisma.user.update({
         where: { id: userId },
         data: { password: passwordHash },
+    });
+}
+
+export async function markUserVerified(userId: string) {
+    return prisma.user.update({
+        where: { id: userId },
+        data: { isVerified: true },
     });
 }
 

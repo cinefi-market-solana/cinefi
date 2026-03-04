@@ -5,55 +5,86 @@ import { env } from "../config/env";
 import { Role } from "@prisma/client";
 
 interface JwtPayload {
-    sub: string;
-    email: string;
-    role: Role;
+  sub: string;
+  email: string;
+  role: Role;
 }
 
 function extractBearerToken(req: Request): string | null {
-    const header = req.headers.authorization;
-    if (!header) return null;
-    const [scheme, token] = header.split(" ");
-    if (scheme !== "Bearer" || !token) return null;
-    return token;
+  const raw = req.headers.authorization;
+  if (!raw) return null;
+  const header = raw.trim();
+  if (!header) return null;
+  const [scheme, token] = header.split(/\s+/);
+  if (!scheme || !token) return null;
+  if (scheme.toLowerCase() !== "bearer") return null;
+  const trimmedToken = token.trim();
+  if (!trimmedToken) return null;
+  return trimmedToken;
 }
 
 export function authenticate(
-    req: Request,
-    res: Response,
-    next: NextFunction,
+  req: Request,
+  res: Response,
+  next: NextFunction,
 ): void {
-    const token = extractBearerToken(req);
-    if (!token) {
-        res.status(StatusCodes.UNAUTHORIZED).json({
-            success: false,
-            error: "Unauthorized",
-            message: "Missing or invalid authorization header",
-        });
-        return;
+  const token = extractBearerToken(req);
+  if (!token) {
+    res.status(StatusCodes.UNAUTHORIZED).json({
+      success: false,
+      error: {
+        code: "UNAUTHORIZED",
+        message: "Missing or invalid authorization header",
+      },
+    });
+    return;
+  }
+
+  try {
+    const decoded = jwt.verify(token, env.JWT_SECRET);
+
+    if (typeof decoded !== "object" || decoded === null) {
+      res.status(StatusCodes.UNAUTHORIZED).json({
+        success: false,
+        error: {
+          code: "UNAUTHORIZED",
+          message: "Invalid token payload",
+        },
+      });
+      return;
     }
 
-    try {
-        const payload = jwt.verify(token, env.JWT_SECRET) as JwtPayload;
-        if (!payload.sub || !payload.email || payload.role == null) {
-            res.status(StatusCodes.UNAUTHORIZED).json({
-                success: false,
-                error: "Unauthorized",
-                message: "Invalid token payload",
-            });
-            return;
-        }
-        req.user = {
-            id: payload.sub,
-            email: payload.email,
-            role: payload.role,
-        };
-        next();
-    } catch {
-        res.status(StatusCodes.UNAUTHORIZED).json({
-            success: false,
-            error: "Unauthorized",
-            message: "Invalid or expired token",
-        });
+    const maybePayload = decoded as Partial<JwtPayload>;
+
+    if (
+      typeof maybePayload.sub !== "string" ||
+      typeof maybePayload.email !== "string" ||
+      !maybePayload.role ||
+      !Object.values(Role).includes(maybePayload.role)
+    ) {
+      res.status(StatusCodes.UNAUTHORIZED).json({
+        success: false,
+        error: {
+          code: "UNAUTHORIZED",
+          message: "Invalid token payload",
+        },
+      });
+      return;
     }
+
+    req.user = {
+      id: maybePayload.sub,
+      email: maybePayload.email,
+      role: maybePayload.role,
+    };
+    next();
+  } catch {
+    res.status(StatusCodes.UNAUTHORIZED).json({
+      success: false,
+      error: {
+        code: "UNAUTHORIZED",
+        message: "Invalid or expired token",
+      },
+    });
+  }
 }
