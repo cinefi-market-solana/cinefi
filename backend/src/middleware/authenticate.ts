@@ -32,8 +32,10 @@ export function authenticate(
   if (!token) {
     res.status(StatusCodes.UNAUTHORIZED).json({
       success: false,
-      error: "Unauthorized",
-      message: "Missing or invalid authorization header",
+      error: {
+        code: "UNAUTHORIZED",
+        message: "Missing or invalid authorization header",
+      },
     });
     return;
   }
@@ -44,8 +46,10 @@ export function authenticate(
     if (typeof decoded !== "object" || decoded === null) {
       res.status(StatusCodes.UNAUTHORIZED).json({
         success: false,
-        error: "Unauthorized",
-        message: "Invalid token payload",
+        error: {
+          code: "UNAUTHORIZED",
+          message: "Invalid token payload",
+        },
       });
       return;
     }
@@ -60,8 +64,10 @@ export function authenticate(
     ) {
       res.status(StatusCodes.UNAUTHORIZED).json({
         success: false,
-        error: "Unauthorized",
-        message: "Invalid token payload",
+        error: {
+          code: "UNAUTHORIZED",
+          message: "Invalid token payload",
+        },
       });
       return;
     }
@@ -75,8 +81,10 @@ export function authenticate(
   } catch {
     res.status(StatusCodes.UNAUTHORIZED).json({
       success: false,
-      error: "Unauthorized",
-      message: "Invalid or expired token",
+      error: {
+        code: "UNAUTHORIZED",
+        message: "Invalid or expired token",
+      },
     });
   }
 }
