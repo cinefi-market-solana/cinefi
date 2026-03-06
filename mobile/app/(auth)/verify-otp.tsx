@@ -21,8 +21,7 @@ import { Colors, FontFamily, Spacing } from '@/theme';
 import { useAuthStore } from '@/stores/authStore';
 import {
   useVerifyMutation,
-  useRegisterMutation,
-  useForgotPasswordMutation,
+  useResendOtpMutation,
 } from '@/hooks/useAuthMutations';
 import { safePush, safeReplace } from '@/utils/navigation';
 
@@ -62,8 +61,7 @@ const VerifyOtpScreen = () => {
   const mode = (params.mode as Mode) ?? 'registration';
 
   const verifyMutation = useVerifyMutation();
-  const registerMutation = useRegisterMutation();
-  const forgotMutation = useForgotPasswordMutation();
+  const resendOtpMutation = useResendOtpMutation();
 
   const [otp, setOtp] = useState('');
   const [otpError, setOtpError] = useState(false);
@@ -168,11 +166,7 @@ const VerifyOtpScreen = () => {
     setApiError(null);
 
     try {
-      if (mode === 'registration') {
-        await registerMutation.mutateAsync({ email });
-      } else {
-        await forgotMutation.mutateAsync({ email });
-      }
+      await resendOtpMutation.mutateAsync({ email });
       setResendMessage('New code sent');
       setTimeout(() => setResendMessage(null), 3000);
     } catch {

@@ -21,6 +21,7 @@ import { ErrorBanner } from '@/components/auth/ErrorBanner';
 import { Colors, FontFamily, Spacing } from '@/theme';
 import { useRegisterMutation } from '@/hooks/useAuthMutations';
 import { safePush, safeReplace } from '@/utils/navigation';
+import { registerFormSchema } from '@/utils/validation';
 
 const RegisterScreen = () => {
   const router = useRouter();
@@ -56,10 +57,12 @@ const RegisterScreen = () => {
   }, [opacity, translateY]);
 
   const isFormValid = useMemo(() => {
-    const hasName = name.trim().length > 0;
-    const hasValidEmail = email.includes('@') && email.includes('.');
-    const hasValidPassword = password.length >= 8;
-    return hasName && hasValidEmail && hasValidPassword;
+    const result = registerFormSchema.safeParse({
+      name: name.trim(),
+      email,
+      password,
+    });
+    return result.success;
   }, [name, email, password]);
 
   const handleSubmit = async () => {
@@ -68,29 +71,32 @@ const RegisterScreen = () => {
     setPasswordError(undefined);
     setApiError(null);
 
-    if (!isFormValid) {
-      if (name.trim().length === 0) {
-        setNameError('Name is required');
-      }
-      if (!email.includes('@') || !email.includes('.')) {
-        setEmailError('Enter a valid email address');
-      }
-      if (password.length < 8) {
-        setPasswordError('Password must be at least 8 characters');
+    const parseResult = registerFormSchema.safeParse({
+      name: name.trim(),
+      email,
+      password,
+    });
+    if (!parseResult.success) {
+      for (const issue of parseResult.error.issues) {
+        const path = issue.path?.[0];
+        const msg = issue.message;
+        if (path === 'name') setNameError(msg);
+        else if (path === 'email') setEmailError(msg);
+        else if (path === 'password') setPasswordError(msg);
       }
       return;
     }
 
     try {
       await registerMutation.mutateAsync({
-        name: name.trim(),
-        email: email.trim(),
-        password,
+        name: parseResult.data.name,
+        email: parseResult.data.email,
+        password: parseResult.data.password,
       });
 
       safePush(router, {
         pathname: '/(auth)/verify-otp',
-        params: { email: email.trim(), mode: 'registration' },
+        params: { email: parseResult.data.email, mode: 'registration' },
       });
     } catch (err: unknown) {
       const code = (err as { code?: string })?.code;

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   KeyboardAvoidingView,
   Platform,
@@ -22,6 +22,7 @@ import { Colors, FontFamily, Spacing } from '@/theme';
 import { useAuthStore } from '@/stores/authStore';
 import { useLoginMutation, useRegisterMutation } from '@/hooks/useAuthMutations';
 import { safePush, safeReplace } from '@/utils/navigation';
+import { parseWithMessage, loginFormSchema } from '@/utils/validation';
 
 const LoginScreen = () => {
   const router = useRouter();
@@ -32,6 +33,11 @@ const LoginScreen = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [apiError, setApiError] = useState<string | null>(null);
+
+  const isFormValid = useMemo(() => {
+    const result = loginFormSchema.safeParse({ email, password });
+    return result.success;
+  }, [email, password]);
 
   const opacity = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(12)).current;
@@ -54,10 +60,16 @@ const LoginScreen = () => {
   const handleSubmit = async () => {
     setApiError(null);
 
+    const parseResult = parseWithMessage(loginFormSchema, { email, password });
+    if (!parseResult.success) {
+      setApiError(parseResult.message);
+      return;
+    }
+
     try {
       const result = await loginMutation.mutateAsync({
-        email: email.trim(),
-        password,
+        email: parseResult.data.email,
+        password: parseResult.data.password,
       });
 
       await setSession(result.user, result.accessToken, result.refreshToken);
@@ -71,8 +83,8 @@ const LoginScreen = () => {
       } else if (code === 'USER_NOT_VERIFIED') {
         try {
           await registerMutation.mutateAsync({
-            email: email.trim(),
-            password,
+            email: parseResult.data.email,
+            password: parseResult.data.password,
           });
         } catch {
           // ignore register errors for resend flow
@@ -80,7 +92,7 @@ const LoginScreen = () => {
 
         safePush(router, {
           pathname: '/(auth)/verify-otp',
-          params: { email: email.trim(), mode: 'registration' },
+          params: { email: parseResult.data.email, mode: 'registration' },
         });
       } else if (code === 'USER_NOT_FOUND' || code === 'NOT_FOUND') {
         setApiError('No account found with this email.');
@@ -149,7 +161,7 @@ const LoginScreen = () => {
                 title="Log In"
                 onPress={handleSubmit}
                 isLoading={loginMutation.isPending}
-                variant="primary"
+                variant={isFormValid ? 'primary' : 'disabled'}
               />
             </View>
 

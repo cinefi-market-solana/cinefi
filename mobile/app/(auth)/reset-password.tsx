@@ -20,6 +20,16 @@ import { ErrorBanner } from '@/components/auth/ErrorBanner';
 import { Colors, FontFamily, Spacing } from '@/theme';
 import { useResetPasswordMutation } from '@/hooks/useAuthMutations';
 import { safeReplace } from '@/utils/navigation';
+import {
+  parseWithMessage,
+  resetPasswordFormSchema,
+} from '@/utils/validation';
+
+function toSingleString(v: unknown): string {
+  if (Array.isArray(v)) return (v[0] != null ? String(v[0]) : '').trim();
+  if (v == null) return '';
+  return String(v).trim();
+}
 
 const ResetPasswordScreen = () => {
   const router = useRouter();
@@ -30,8 +40,14 @@ const ResetPasswordScreen = () => {
     otp?: string;
   }>();
 
-  const email = (params.email as string) ?? '';
-  const otp = (params.otp as string) ?? '';
+  const email = useMemo(
+    () => toSingleString(params.email),
+    [params.email],
+  );
+  const otp = useMemo(
+    () => toSingleString(params.otp),
+    [params.otp],
+  );
 
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -67,21 +83,22 @@ const ResetPasswordScreen = () => {
   const handleSubmit = async () => {
     setApiError(null);
 
-    if (password !== confirmPassword) {
-      setApiError('Passwords do not match.');
-      return;
-    }
-
-    if (password.length < 8) {
-      setApiError('Password must be at least 8 characters.');
+    const parseResult = parseWithMessage(resetPasswordFormSchema, {
+      email,
+      otp,
+      password,
+      confirmPassword,
+    });
+    if (!parseResult.success) {
+      setApiError(parseResult.message);
       return;
     }
 
     try {
       await resetMutation.mutateAsync({
-        email,
-        otp,
-        newPassword: password,
+        email: parseResult.data.email,
+        otp: parseResult.data.otp,
+        newPassword: parseResult.data.password,
       });
 
       Alert.alert('Success', 'Password reset successfully');

@@ -52,11 +52,6 @@ const ForgotPasswordScreen = () => {
 
     try {
       await forgotMutation.mutateAsync({ email: email.trim() });
-    } catch (err: unknown) {
-      if ((err as { code?: string })?.code === 'NETWORK_ERROR') {
-        setApiError((err as { message?: string })?.message ?? 'Network error');
-      }
-    } finally {
       setInfoMessage(
         'If an account exists with this email, a code has been sent.',
       );
@@ -64,6 +59,14 @@ const ForgotPasswordScreen = () => {
         pathname: '/(auth)/verify-otp',
         params: { email: email.trim(), mode: 'forgot_password' },
       });
+    } catch (err: unknown) {
+      const code = (err as { code?: string })?.code;
+      const message = (err as { message?: string })?.message;
+      if (code === 'NETWORK_ERROR') {
+        setApiError(message ?? 'Network error');
+      } else {
+        setApiError(message ?? 'Something went wrong. Please try again.');
+      }
     }
   };
 

@@ -5,11 +5,13 @@ import {
   authLogin,
   authVerify,
   authForgotPassword,
+  authResendOtp,
   authResetPassword,
   type AuthRegisterBody,
   type AuthLoginBody,
   type AuthVerifyBody,
   type AuthForgotPasswordBody,
+  type AuthResendOtpBody,
   type AuthResetPasswordBody,
 } from '@/services/api';
 
@@ -34,6 +36,12 @@ export function useVerifyMutation() {
 export function useForgotPasswordMutation() {
   return useMutation({
     mutationFn: (body: AuthForgotPasswordBody) => authForgotPassword(body),
+  });
+}
+
+export function useResendOtpMutation() {
+  return useMutation({
+    mutationFn: (body: AuthResendOtpBody) => authResendOtp(body),
   });
 }
 

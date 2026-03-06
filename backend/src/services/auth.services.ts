@@ -11,6 +11,7 @@ import type {
     LoginInput,
     VerifyOtpInput,
     ForgotPasswordInput,
+    ResendOtpInput,
     ResetPasswordInput,
 } from "../validators/auth.validator";
 import { generateOtp, hashOtp, sendEmail } from "../utils/otp";
@@ -51,6 +52,24 @@ export async function register(input: RegisterInput): Promise<void> {
         name: input.name ?? null,
         password: passwordHash,
     });
+
+    const otp = generateOtp();
+    const otpHash = hashOtp(otp);
+    await otpRepo.createOtp(normalizedEmail, otpHash);
+    await sendEmail(normalizedEmail, otp);
+}
+
+export async function resendOtp(input: ResendOtpInput): Promise<void> {
+    const normalizedEmail = input.email.trim().toLowerCase();
+
+    const recentOtps = await otpRepo.countRecentOtps(normalizedEmail);
+    if (recentOtps >= 5) {
+        throw new AppError(
+            StatusCodes.TOO_MANY_REQUESTS,
+            "Too many OTP requests",
+            "TOO_MANY_OTP_REQUESTS",
+        );
+    }
 
     const otp = generateOtp();
     const otpHash = hashOtp(otp);

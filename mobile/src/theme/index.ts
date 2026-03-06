@@ -21,6 +21,13 @@ export const Colors = {
   borderSubtle: 'rgba(255,255,255,0.05)',
 } as const;
 
+/** Use for disabled button background, text, and border for consistency across the app. */
+export const DisabledButtonColors = {
+  bg: Colors.surface,
+  text: Colors.muted,
+  border: Colors.border,
+} as const;
+
 export const FontFamily = {
   display: 'BebasNeue_400Regular',
   body: 'DMSans_400Regular',

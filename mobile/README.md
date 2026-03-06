@@ -8,20 +8,6 @@ This template is a ready-to-go Android Expo dApp that offers:
 
 **This is only fully functional on Android.**
 
-<table>
-  <tr>
-    <td align="center">
-      <img src="./screenshots/screenshot1.png" alt="Scaffold dApp Screenshot 1" width=300 />
-    </td>
-    <td align="center">
-      <img src="./screenshots/screenshot2.png" alt="Scaffold dApp Screenshot 2" width=300 />
-    </td>
-    <td align="center">
-      <img src="./screenshots/screenshot3.png" alt="Scaffold dApp Screenshot 3" width=300 />
-    </td>
-  </tr>
-</table>
-
 ## Tech Stack
 
 | Library               | Category          | Version | Description                                           |

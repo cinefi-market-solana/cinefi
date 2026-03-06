@@ -4,7 +4,7 @@ import axios, {
   AxiosRequestConfig,
   InternalAxiosRequestConfig,
 } from 'axios';
-import { Platform, ToastAndroid } from 'react-native';
+import { Alert, Platform, ToastAndroid } from 'react-native';
 import { useAuthStore } from '../stores/authStore';
 
 type ApiSuccess<T> = {
@@ -41,13 +41,8 @@ const api: AxiosInstance = axios.create({
   timeout: 10000,
 });
 
-let isRefreshing = false;
-
 api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   const { accessToken } = useAuthStore.getState();
-
-  const fullUrl = `${config.baseURL ?? ''}${config.url ?? ''}`;
-  ToastAndroid.show(fullUrl, ToastAndroid.SHORT);
 
   if (accessToken) {
     config.headers.Authorization = `Bearer ${accessToken}`;
@@ -62,7 +57,7 @@ api.interceptors.response.use(
     const originalConfig = error.config as AxiosRequestConfig;
 
     if (!response || !originalConfig) {
-      return Promise.reject(error);
+      return Promise.reject(handleApiError(error));
     }
 
     const status = response.status;
@@ -84,54 +79,61 @@ api.interceptors.response.use(
           return retryResponse;
         }
 
-        return Promise.reject(error);
+        return Promise.reject(handleApiError(error));
       } catch (refreshError) {
         const { clearSession } = useAuthStore.getState();
         clearSession();
-        return Promise.reject(refreshError);
-      } finally {
-        isRefreshing = false;
+        return Promise.reject(handleApiError(refreshError));
       }
     }
 
-    return Promise.reject(error);
+    return Promise.reject(handleApiError(error));
   },
 );
 
-const normalizeError = (error: unknown): ApiErrorShape => {
-  if (
-    typeof error === 'object' &&
-    error !== null &&
-    'code' in error &&
-    'message' in error
-  ) {
-    const envelope = error as ApiErrorShape;
-    if (
-      typeof envelope.code === 'string' &&
-      typeof envelope.message === 'string'
-    ) {
-      return { code: envelope.code, message: envelope.message };
-    }
-  }
-
+export function normalizeError(error: unknown): ApiErrorShape {
   if (axios.isAxiosError(error)) {
     const axiosError = error as AxiosError<ApiEnvelope<unknown>>;
 
-    if (axiosError.response && axiosError.response.data) {
-      const data = axiosError.response.data;
+    if (axiosError.response?.data && typeof axiosError.response.data === 'object') {
+      const data = axiosError.response.data as ApiFailure;
       if (!data.success && data.error) {
         return {
-          code: data.error.code,
-          message: data.error.message,
+          code:
+            typeof data.error.code === 'string' ? data.error.code : 'ERROR',
+          message:
+            typeof data.error.message === 'string'
+              ? data.error.message
+              : 'Something went wrong. Please try again.',
         };
       }
     }
 
-    const message = axiosError.message || '';
-    if (message.toLowerCase().includes('network')) {
+    const msg = axiosError.message || '';
+    if (msg.toLowerCase().includes('network')) {
       return {
         code: 'NETWORK_ERROR',
-        message: message.toLowerCase(),
+        message: msg || 'Network error. Please check your connection.',
+      };
+    }
+  }
+
+  if (
+    typeof error === 'object' &&
+    error !== null &&
+    'message' in error
+  ) {
+    const envelope = error as { code?: unknown; message?: unknown };
+    const message =
+      typeof envelope.message === 'string'
+        ? envelope.message
+        : undefined;
+    const code =
+      typeof envelope.code === 'string' ? envelope.code : undefined;
+    if (message !== undefined) {
+      return {
+        code: code ?? 'ERROR',
+        message,
       };
     }
   }
@@ -140,7 +142,25 @@ const normalizeError = (error: unknown): ApiErrorShape => {
     code: 'UNKNOWN_ERROR',
     message: 'Something went wrong. Please try again.',
   };
-};
+}
+
+function showErrorToast(message: string): void {
+  if (Platform.OS === 'android') {
+    ToastAndroid.show(message, ToastAndroid.LONG);
+  } else {
+    Alert.alert('Error', message);
+  }
+}
+
+/**
+ * Normalize error and show its message in a toast/alert; then return the normalized shape.
+ * Use in response interceptor and in auth* catch blocks so every API error shows feedback.
+ */
+export function handleApiError(error: unknown): ApiErrorShape {
+  const normalized = normalizeError(error);
+  showErrorToast(normalized.message);
+  return normalized;
+}
 
 const unwrap = <T>(response: { data: ApiEnvelope<T> }): T => {
   if (response.data.success) {
@@ -183,6 +203,10 @@ export type AuthForgotPasswordBody = {
   email: string;
 };
 
+export type AuthResendOtpBody = {
+  email: string;
+};
+
 export type AuthResetPasswordBody = {
   email: string;
   otp: string;
@@ -207,8 +231,7 @@ export async function authRegister(
     const response = await api.post<ApiEnvelope<null>>('/auth/register', body);
     return unwrap(response);
   } catch (err) {
-    ToastAndroid.show(JSON.stringify(err), ToastAndroid.LONG);
-    throw normalizeError(err);
+    throw handleApiError(err);
   }
 }
 
@@ -222,7 +245,7 @@ export async function authVerify(
     );
     return unwrap(response);
   } catch (err) {
-    throw normalizeError(err);
+    throw handleApiError(err);
   }
 }
 
@@ -236,7 +259,7 @@ export async function authLogin(
     );
     return unwrap(response);
   } catch (err) {
-    throw normalizeError(err);
+    throw handleApiError(err);
   }
 }
 
@@ -250,7 +273,7 @@ export async function authRefresh(
     );
     return unwrap(response);
   } catch (err) {
-    throw normalizeError(err);
+    throw handleApiError(err);
   }
 }
 
@@ -264,7 +287,21 @@ export async function authForgotPassword(
     );
     return unwrap(response);
   } catch (err) {
-    throw normalizeError(err);
+    throw handleApiError(err);
+  }
+}
+
+export async function authResendOtp(
+  body: AuthResendOtpBody,
+): Promise<null> {
+  try {
+    const response = await api.post<ApiEnvelope<null>>(
+      '/auth/resend-otp',
+      body,
+    );
+    return unwrap(response);
+  } catch (err) {
+    throw handleApiError(err);
   }
 }
 
@@ -278,7 +315,7 @@ export async function authResetPassword(
     );
     return unwrap(response);
   } catch (err) {
-    throw normalizeError(err);
+    throw handleApiError(err);
   }
 }
 

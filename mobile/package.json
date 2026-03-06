@@ -1,7 +1,7 @@
 {
   "name": "mobile",
   "version": "1.0.0",
-  "main": "expo-router/entry",
+  "main": "index.js",
   "scripts": {
     "start": "expo start",
     "android": "expo run:android",
@@ -53,6 +53,7 @@
     "react": "18.3.1",
     "react-native": "0.76.9",
     "react-native-gesture-handler": "~2.20.2",
+    "react-native-get-random-values": "~1.11.0",
     "react-native-mmkv": "^2.12.2",
     "react-native-paper": "^5.12.3",
     "react-native-reanimated": "~3.16.1",
@@ -63,6 +64,7 @@
     "readable-stream": "^4.7.0",
     "url": "^0.11.4",
     "victory-native": "^41.20.2",
+    "zod": "^4.3.6",
     "zustand": "^5.0.11"
   },
   "devDependencies": {

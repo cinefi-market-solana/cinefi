@@ -29,6 +29,10 @@ export const forgotPasswordBodySchema = z.object({
     email: emailSchema,
 });
 
+export const resendOtpBodySchema = z.object({
+    email: emailSchema,
+});
+
 export const resetPasswordBodySchema = z.object({
     email: emailSchema,
     otp: z.string().length(6, "OTP must be 6 digits"),
@@ -40,4 +44,5 @@ export type LoginInput = z.infer<typeof loginBodySchema>;
 export type RefreshInput = z.infer<typeof refreshBodySchema>;
 export type VerifyOtpInput = z.infer<typeof verifyOtpBodySchema>;
 export type ForgotPasswordInput = z.infer<typeof forgotPasswordBodySchema>;
+export type ResendOtpInput = z.infer<typeof resendOtpBodySchema>;
 export type ResetPasswordInput = z.infer<typeof resetPasswordBodySchema>;

@@ -11,7 +11,7 @@ import Animated, {
   useSharedValue,
   withSpring,
 } from 'react-native-reanimated';
-import { Colors, FontFamily } from '@/theme';
+import { Colors, DisabledButtonColors, FontFamily } from '@/theme';
 
 type AuthButtonVariant = 'primary' | 'ghost' | 'disabled';
 
@@ -46,8 +46,17 @@ const AuthButton = ({
 
   const isDisabled = isLoading || variant === 'disabled';
 
-  const baseStyle =
-    variant === 'ghost' ? S.ghostContainer : S.primaryContainer;
+  const baseStyle = isDisabled
+    ? S.disabledContainer
+    : variant === 'ghost'
+      ? S.ghostContainer
+      : S.primaryContainer;
+
+  const textStyle = isDisabled
+    ? S.disabledText
+    : variant === 'ghost'
+      ? S.ghostText
+      : S.primaryText;
 
   return (
     <Animated.View style={[S.wrapper, animatedStyle, style]}>
@@ -59,19 +68,12 @@ const AuthButton = ({
         style={({ pressed }) => [
           baseStyle,
           pressed && !isDisabled ? S.pressed : null,
-          isDisabled ? S.disabled : null,
         ]}
       >
         {isLoading ? (
           <ActivityIndicator color={Colors.white} size="small" />
         ) : (
-          <Text
-            style={
-              variant === 'ghost' ? S.ghostText : S.primaryText
-            }
-          >
-            {title}
-          </Text>
+          <Text style={textStyle}>{title}</Text>
         )}
       </Pressable>
     </Animated.View>
@@ -103,8 +105,20 @@ const S = StyleSheet.create({
   pressed: {
     opacity: 0.96,
   },
-  disabled: {
-    opacity: 0.7,
+  disabledContainer: {
+    width: '100%',
+    height: 56,
+    borderRadius: 12,
+    backgroundColor: DisabledButtonColors.bg,
+    borderWidth: 1,
+    borderColor: DisabledButtonColors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  disabledText: {
+    fontFamily: FontFamily.bodyMd,
+    fontSize: 16,
+    color: DisabledButtonColors.text,
   },
   primaryText: {
     fontFamily: FontFamily.bodySb,

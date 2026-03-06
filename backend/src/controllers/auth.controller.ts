@@ -6,6 +6,7 @@ import {
     refreshBodySchema,
     verifyOtpBodySchema,
     forgotPasswordBodySchema,
+    resendOtpBodySchema,
     resetPasswordBodySchema,
 } from "../validators/auth.validator";
 import * as authService from "../services/auth.services";
@@ -90,6 +91,18 @@ export async function forgotPassword(
 ): Promise<void> {
     const body = forgotPasswordBodySchema.parse(req.body);
     await authService.requestPasswordReset(body);
+    res.status(StatusCodes.OK).json({
+        success: true,
+        data: { message: "OTP sent to email" },
+    });
+}
+
+export async function resendOtp(
+    req: Request,
+    res: Response<SuccessResponse<{ message: string }>>,
+): Promise<void> {
+    const body = resendOtpBodySchema.parse(req.body);
+    await authService.resendOtp(body);
     res.status(StatusCodes.OK).json({
         success: true,
         data: { message: "OTP sent to email" },
