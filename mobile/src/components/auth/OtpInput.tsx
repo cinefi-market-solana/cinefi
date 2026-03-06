@@ -46,18 +46,22 @@ const OtpInput = ({
     }
   }, [error, errorAnim]);
 
-  // Reset completion guard when value is cleared (e.g. after resend)
+  // Reset completion guard when code becomes incomplete so onComplete can fire again if re-entered
   useEffect(() => {
-    if (value.length === 0) {
+    if (value.length < length) {
       onCompleteFiredRef.current = null;
     }
-  }, [value.length]);
+  }, [value.length, length]);
 
   const handleChangeText = useCallback(
     (text: string) => {
       let sanitized = text.replace(/\D/g, '');
       if (sanitized.length > length) {
         sanitized = sanitized.slice(0, length);
+      }
+
+      if (sanitized.length < length) {
+        onCompleteFiredRef.current = null;
       }
 
       onChange(sanitized);

@@ -99,6 +99,21 @@ api.interceptors.response.use(
 );
 
 const normalizeError = (error: unknown): ApiErrorShape => {
+  if (
+    typeof error === 'object' &&
+    error !== null &&
+    'code' in error &&
+    'message' in error
+  ) {
+    const envelope = error as ApiErrorShape;
+    if (
+      typeof envelope.code === 'string' &&
+      typeof envelope.message === 'string'
+    ) {
+      return { code: envelope.code, message: envelope.message };
+    }
+  }
+
   if (axios.isAxiosError(error)) {
     const axiosError = error as AxiosError<ApiEnvelope<unknown>>;
 
