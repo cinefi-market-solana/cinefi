@@ -39,16 +39,28 @@ const RootLayout = () => {
   const { isLoading, isAuthenticated, silentRefresh } = useAuthStore();
   const [hasTriggeredRefresh, setHasTriggeredRefresh] = useState(false);
 
+const RootLayout = () => {
+  const { isLoading, isAuthenticated, silentRefresh } = useAuthStore();
+  const [hasTriggeredRefresh, setHasTriggeredRefresh] = useState(false);
+  const [authBootstrapped, setAuthBootstrapped] = useState(false);
+
   useEffect(() => {
-    if (!hasTriggeredRefresh) {
+    let mounted = true;
+    const bootstrapAuth = async () => {
+      if (hasTriggeredRefresh) return;
       setHasTriggeredRefresh(true);
-      silentRefresh();
-    }
+      await silentRefresh();
+      if (mounted) setAuthBootstrapped(true);
+    };
+    bootstrapAuth();
+    return () => {
+      mounted = false;
+    };
   }, [hasTriggeredRefresh, silentRefresh]);
 
   useEffect(() => {
     const handleReady = async () => {
-      if (!fontsLoaded || isLoading) {
+      if (!fontsLoaded || !authBootstrapped || isLoading) {
         return;
       }
 
@@ -66,7 +78,8 @@ const RootLayout = () => {
     };
 
     handleReady();
-  }, [fontsLoaded, isLoading, isAuthenticated, router]);
+  }, [fontsLoaded, authBootstrapped, isLoading, isAuthenticated, router]);
+};
 
   if (!fontsLoaded) {
     return (
