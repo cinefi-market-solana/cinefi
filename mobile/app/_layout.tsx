@@ -38,10 +38,6 @@ const RootLayout = () => {
 
   const { isLoading, isAuthenticated, silentRefresh } = useAuthStore();
   const [hasTriggeredRefresh, setHasTriggeredRefresh] = useState(false);
-
-const RootLayout = () => {
-  const { isLoading, isAuthenticated, silentRefresh } = useAuthStore();
-  const [hasTriggeredRefresh, setHasTriggeredRefresh] = useState(false);
   const [authBootstrapped, setAuthBootstrapped] = useState(false);
 
   useEffect(() => {
@@ -79,9 +75,8 @@ const RootLayout = () => {
 
     handleReady();
   }, [fontsLoaded, authBootstrapped, isLoading, isAuthenticated, router]);
-};
 
-  if (!fontsLoaded) {
+  if (!fontsLoaded || !authBootstrapped || isLoading) {
     return (
       <View style={S.loading}>
         <StatusBar style="light" backgroundColor={Colors.bg} />
